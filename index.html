@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pixel Echo</title>
+  <style>
+    html, body {
+      margin: 0;
+      overflow: hidden;
+      background: black;
+    }
+
+    canvas {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+<canvas id="echoCanvas"></canvas>
+
+<script>
+  const canvas = document.getElementById('echoCanvas');
+  const ctx = canvas.getContext('2d');
+  let width, height;
+
+  function resizeCanvas() {
+    width = canvas.width = window.innerWidth;
+    height = canvas.height = window.innerHeight;
+  }
+
+  window.addEventListener('resize', resizeCanvas);
+  resizeCanvas();
+
+  let trail = [];
+  let echo = [];
+
+  document.addEventListener('mousemove', e => {
+    const point = {
+      x: e.clientX,
+      y: e.clientY,
+      color: getRandomColor(),
+      time: Date.now()
+    };
+    trail.push(point);
+  });
+
+  function getRandomColor() {
+    const colors = ['#ff0080', '#00ffff', '#ffff00', '#ff6600', '#66ff66', '#cc66ff'];
+    return colors[Math.floor(Math.random() * colors.length)];
+  }
+
+  function drawCircle(x, y, color, radius = 4) {
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+
+  function animate() {
+    ctx.fillStyle = 'rgba(0,0,0,0.1)';
+    ctx.fillRect(0, 0, width, height);
+
+    const now = Date.now();
+
+    trail = trail.filter(p => now - p.time < 10000); // Keep only last 10s
+    echo = trail
+      .filter(p => now - p.time > 5000) // Show echo after 5s
+      .map(p => ({ x: width - p.x, y: height - p.y, color: p.color }));
+
+    trail.forEach(p => drawCircle(p.x, p.y, p.color));
+    echo.forEach(p => drawCircle(p.x, p.y, p.color, 2)); // Echo is smaller
+
+    requestAnimationFrame(animate);
+  }
+
+  animate();
+</script>
+</body>
+</html>
